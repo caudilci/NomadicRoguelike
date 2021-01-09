@@ -17,10 +17,10 @@ var treasure_ind = 0
 
 onready var roomsTextureData = preload("res://Art/rooms.png").get_data()
 
-#var key = preload("res://objects/Key.tscn")
-#var door = preload("res://objects/Door.tscn")
-#var enemy = preload("res://objects/Enemy.tscn")
-#var potion = preload("res://objects/Potion.tscn")
+var key = preload("res://objects/Key.tscn")
+var door = preload("res://objects/Door.tscn")
+var enemy = preload("res://objects/Enemy.tscn")
+var potion = preload("res://objects/Potion.tscn")
 
 const START_ROOM_COUNT = 3 # not including starting room and exit room
 const ROOM_COUNT_INCREASE_PER_LEVEL = 2
@@ -61,13 +61,12 @@ func generateWorld(currLevel):
 	
 	var roomData = generateRoomData()
 	var spawnLocations = generateRooms(roomData)
-	#var worldData = generateWorldObjects(spawnLocations)
+	var worldData = generateWorldObjects(spawnLocations)
 	#world_data["astar"] = astar
 	#world_data["astar_points_cache"] = astar_points_cache
 	#account for unwinnable worlds
 	#if worldData.keys.size() < KEY_COUNT:
 	#	worldData = generateWorld(level, treasure_ind)
-	player.global_position = map_coord_to_world_pos(Vector2.ONE)
 	return 
 	
 
@@ -195,6 +194,14 @@ func generateRooms(roomData: Dictionary) -> Dictionary:
 	generate_astar_grid(walkable_floor_tiles)
 	return spawnLocations
 	
+func generateWorldObjects(spawnLocations):
+	player.global_position = map_coord_to_world_pos(Vector2.ONE)
+	var exitWorldCoords = map_coord_to_world_pos(spawnLocations.exitCoords)
+	exitWorldCoords.x += 8
+	exitWorldCoords.y += 8
+	exit.global_position = exitWorldCoords
+	return
+
 func generate_astar_grid(walkable_floor_tiles):
 	astar_points_cache = {}
 	for tile_coord in walkable_floor_tiles.values():
@@ -218,4 +225,4 @@ func get_rand_wall_type():
 	return wall_type
 	
 func map_coord_to_world_pos(coord):
-	return tilemap.map_to_world(Vector2(coord[0], coord[1])) + Vector2(CELL_SIZE, CELL_SIZE)
+	return tilemap.map_to_world(Vector2(coord[0], coord[1]))
