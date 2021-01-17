@@ -4,7 +4,8 @@ extends Node2D
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
-
+var alerted = false
+var health = 2
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -67,5 +68,9 @@ func hasLineOfSight(start_coord, end_coord, tilemap: TileMap):
 			return false
 	return true
 
+
 func getGridPath(startCoord, endCoord, astar: AStar2D, astarPointsCache: Dictionary):
 	return astar.get_point_path(astarPointsCache[str(startCoord)], astarPointsCache[str(endCoord)])
+
+func alert():
+	alerted=true

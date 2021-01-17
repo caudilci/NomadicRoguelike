@@ -17,10 +17,11 @@ var treasure_ind = 0
 
 onready var roomsTextureData = preload("res://Art/rooms.png").get_data()
 
-var key = preload("res://objects/Key.tscn")
-var door = preload("res://objects/Door.tscn")
-var enemy = preload("res://objects/Enemy.tscn")
-var potion = preload("res://objects/Potion.tscn")
+var key = preload("res://Objects/Key.tscn")
+var door = preload("res://Objects/Door.tscn")
+var enemy = preload("res://Objects/Enemy.tscn")
+var potion = preload("res://Objects/Potion.tscn")
+var chest = preload("res://Objects/Chest.tscn")
 
 const START_ROOM_COUNT = 3 # not including starting room and exit room
 const ROOM_COUNT_INCREASE_PER_LEVEL = 2
@@ -37,9 +38,11 @@ const CHANCE_OF_NON_BLANK_WALL = 4
 
 const KEY_COUNT = 1
 const DOOR_COUNT = 1
+const MAX_DOOR_COUNT = 3
+
 const START_ENEMY_COUNT = 2
 const ENEMY_COUNT_INCREASE_PER_LEVEL = 1
-const START_POTION_COUNT = 0
+const START_POTION_COUNT = 1
 const POTION_COUNT_INCREASE_PER_LEVEL = 1
 
 const CHANCE_OF_TREASURE_SPAWNING = 2
@@ -58,16 +61,21 @@ func generateWorld(currLevel):
 	astar.clear()
 	tilemap.clear()
 	#clear all enemies, keys, potions, etc
+	get_tree().call_group("enemies", "queue_free")
+	get_tree().call_group("keys", "queue_free")
+	get_tree().call_group("potions", "queue_free")
+	get_tree().call_group("doors", "queue_free")
+	get_tree().call_group("chests", "queue_free")
 	
 	var roomData = generateRoomData()
 	var spawnLocations = generateRooms(roomData)
 	var worldData = generateWorldObjects(spawnLocations)
-	#world_data["astar"] = astar
-	#world_data["astar_points_cache"] = astar_points_cache
+	worldData["astar"] = astar
+	worldData["astar_points_cache"] = astar_points_cache
 	#account for unwinnable worlds
-	#if worldData.keys.size() < KEY_COUNT:
-	#	worldData = generateWorld(level, treasure_ind)
-	return 
+	if worldData.keys.size() < KEY_COUNT:
+		worldData = generateWorld(currentLevel)
+	return worldData
 	
 
 func generateRoomData():
@@ -78,7 +86,9 @@ func generateRoomData():
 	var possRoomLocs = getOpenAdjacentRooms(roomData, [0,0])
 	var generatedRooms = []
 	for _i in range(roomCount):
-		var randRoomType = (randi() % NUM_OF_ROOM_TYPES-1) +1
+		var randRoomType = 0
+		while randRoomType == START_ROOM_TYPE_IND or randRoomType == EXIT_ROOM_TYPE_IND:
+			randRoomType = (randi() % NUM_OF_ROOM_TYPES-1) +1
 		var randRoomLoc = selectRandomRoomLoc(possRoomLocs, roomData)
 		roomData[str(randRoomLoc)] = {"type":randRoomType, "coords":randRoomLoc}
 		generatedRooms.append(randRoomLoc)
@@ -197,10 +207,57 @@ func generateRooms(roomData: Dictionary) -> Dictionary:
 func generateWorldObjects(spawnLocations):
 	player.global_position = map_coord_to_world_pos(Vector2.ONE)
 	var exitWorldCoords = map_coord_to_world_pos(spawnLocations.exitCoords)
+	print(exitWorldCoords)
 	exitWorldCoords.x += 8
 	exitWorldCoords.y += 8
 	exit.global_position = exitWorldCoords
-	return
+	print(exit.global_position)
+	var enemy_count = START_ENEMY_COUNT + ENEMY_COUNT_INCREASE_PER_LEVEL * currentLevel
+	var enemies = spawnObjects(enemy, spawnLocations.enemySpawns, enemy_count, "enemies")
+	var keys = []
+	var doors = []
+	var keysToSpawn = KEY_COUNT + currentLevel
+	if keysToSpawn > MAX_DOOR_COUNT:
+		keys = spawnObjects(key, spawnLocations.pickupSpawns, MAX_DOOR_COUNT, "keys")
+		doors = spawnObjects(door, spawnLocations.doorCoords, MAX_DOOR_COUNT, "doors", false)
+	else:
+		keys = spawnObjects(key, spawnLocations.pickupSpawns, keysToSpawn, "keys")
+		doors = spawnObjects(door, spawnLocations.doorCoords, keysToSpawn, "doors", false)
+	
+	var potionsToSpawn = START_POTION_COUNT + currentLevel * POTION_COUNT_INCREASE_PER_LEVEL
+	var potions = spawnObjects(potion, spawnLocations.pickupSpawns, potionsToSpawn, "potions")
+	var chests = spawnObjects(chest, spawnLocations.pickupSpawns, 1, "chests")
+	
+	var data = {
+		"enemies": enemies,
+		"keys": keys,
+		"potions": potions,
+		"doors": doors,
+		"player": player,
+		"exit": exit,
+		"chests": chests
+	}
+	return data
+
+func spawnObjects(object, locationList: Array, numToSpawn: int, groupName: String, flipRandomly=true) -> Dictionary:
+	var spawnedObjs = {}
+	for _i in range(numToSpawn):
+		if locationList.size() == 0:
+			return spawnedObjs
+		var instance = object.instance()
+		scene_root.add_child(instance)
+		var randLocIndex = randi() % locationList.size()
+		var coord = locationList[randLocIndex]
+		var worldCoord = map_coord_to_world_pos(coord)
+		worldCoord.x += 8
+		worldCoord.y += 8
+		instance.global_position = worldCoord
+		locationList.remove(randLocIndex)
+		spawnedObjs[str(coord)] = instance
+		instance.add_to_group(groupName)
+		if flipRandomly and instance.has_node("Sprite") and randi() % 2 == 0:
+			instance.get_node("Sprite").flip_h = true
+	return spawnedObjs
 
 func generate_astar_grid(walkable_floor_tiles):
 	astar_points_cache = {}

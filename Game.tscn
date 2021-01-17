@@ -2,7 +2,7 @@
 
 [ext_resource path="res://Art/wall04.png" type="Texture" id=1]
 [ext_resource path="res://Art/wall03.png" type="Texture" id=2]
-[ext_resource path="res://Art/player.png" type="Texture" id=3]
+[ext_resource path="res://Art/player02.png" type="Texture" id=3]
 [ext_resource path="res://Art/wall02.png" type="Texture" id=4]
 [ext_resource path="res://Art/wall01.png" type="Texture" id=5]
 [ext_resource path="res://Game.gd" type="Script" id=6]
@@ -71,6 +71,8 @@
 [node name="Game" type="Node2D"]
 script = ExtResource( 6 )
 
+[node name="Exit" parent="." instance=ExtResource( 9 )]
+
 [node name="TileMap" type="TileMap" parent="."]
 tile_set = SubResource( 1 )
 cell_size = Vector2( 16, 16 )
@@ -78,7 +80,6 @@ cell_custom_transform = Transform2D( 1, 0, 0, 1, 0, 0 )
 format = 1
 
 [node name="Player" type="Sprite" parent="."]
-position = Vector2( 144, 80 )
 texture = ExtResource( 3 )
 centered = false
 script = ExtResource( 8 )
@@ -93,8 +94,6 @@ drag_margin_bottom = 0.0
 
 [node name="WorldGenerator" type="Node2D" parent="."]
 script = ExtResource( 7 )
-
-[node name="Exit" parent="." instance=ExtResource( 9 )]
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 offset = Vector2( 8, 12 )
@@ -153,3 +152,65 @@ valign = 1
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="DeathScreen" type="Label" parent="CanvasLayer"]
+visible = false
+margin_left = 264.0
+margin_top = 148.0
+margin_right = 378.0
+margin_bottom = 179.0
+text = "You died!
+Press R to restart."
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Panel" type="Panel" parent="CanvasLayer/DeathScreen"]
+show_behind_parent = true
+margin_left = -16.0
+margin_top = -16.0
+margin_right = 130.0
+margin_bottom = 48.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="StartScreen" type="Label" parent="CanvasLayer"]
+margin_left = 232.0
+margin_top = 116.0
+margin_right = 373.0
+margin_bottom = 147.0
+text = "Press any key to start!
+Press Esc to Quit!"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Panel" type="Panel" parent="CanvasLayer/StartScreen"]
+show_behind_parent = true
+margin_left = -16.0
+margin_top = -16.0
+margin_right = 160.0
+margin_bottom = 160.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Label" type="Label" parent="CanvasLayer/StartScreen"]
+margin_left = 16.0
+margin_top = 32.0
+margin_right = 132.0
+margin_bottom = 144.0
+text = "Controls:
+Movement: WASD
+Skip: Space
+
+Potions Heal
+Enemies Hurt
+Keys Open Doors"
+align = 1
+valign = 1
